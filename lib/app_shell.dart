@@ -8,10 +8,10 @@ class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
   @override
-  _AppShellState createState() => _AppShellState();
+  AppShellState createState() => AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
 
   static const List<Widget> _widgetOptions = <Widget>[
@@ -32,19 +32,30 @@ class _AppShellState extends State<AppShell> {
     return Scaffold(
       body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
       bottomNavigationBar: BottomNavigationBar(
+        // CHANGE: Updated the icons to better match the prototype
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.show_chart), label: 'Rates'),
-          BottomNavigationBarItem(icon: Icon(Icons.savings), label: 'Savings'),
+          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+            icon: Icon(Icons.bar_chart_outlined),
+            label: 'Rates',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.show_chart_outlined),
+            label: 'Savings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
             label: 'Settings',
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color(0xFF2C2C2E),
+        selectedItemColor: const Color(0xFF4A5BF6),
+        unselectedItemColor: Colors.grey[600],
+        showUnselectedLabels: true, // Show labels for better clarity
+        showSelectedLabels: true,
       ),
     );
   }

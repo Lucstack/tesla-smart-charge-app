@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tesla_smart_charge_app/models/user_data.dart';
-import 'package:tesla_smart_charge_app/screens/connect_tesla_screen.dart'; // Import the screen
+import 'package:tesla_smart_charge_app/widgets/custom_slider.dart';
+import 'package:tesla_smart_charge_app/screens/connect_tesla_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,11 +14,9 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // We keep the state management for the sliders
-  late int _targetBattery;
-  late int _emergencyThreshold;
-  late int _chargingDuration;
-  bool _isInitialized = false;
+  // We only need local state for the toggle, as it has a visual on/off state.
+  // The sliders will now get their values directly from the provider.
+  bool? _solarChargingEnabled;
 
   Future<void> _updateUserSetting(String field, dynamic value) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -31,37 +30,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final userData = Provider.of<UserData>(context);
+    print('DEBUG: Current VIN from provider is "${userData.vin}"');
 
-    if (!_isInitialized) {
-      _targetBattery = userData.targetBattery;
-      _emergencyThreshold = userData.emergencyThreshold;
-      _chargingDuration = userData.chargingDuration;
-      _isInitialized = true;
-    }
+    final theme = Theme.of(context);
+    // Initialize the toggle's state if it hasn't been set yet.
+    _solarChargingEnabled ??= userData.solarChargingEnabled;
 
-    // --- NEW LOGIC: Check if Tesla is connected ---
+    // --- THIS IS THE CRUCIAL CHECK ---
+    // We read directly from the provider every time the widget builds.
     final bool isTeslaConnected =
         userData.vin != 'UNKNOWN' && userData.vin.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: Colors.black87,
-        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.person_outline),
+          onPressed: () {},
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         children: <Widget>[
-          // --- NEW WIDGET: Show this card ONLY if not connected ---
+          // Show the "Connect" card if the user is not connected.
           if (!isTeslaConnected)
             Card(
-              color: Colors.blue[50],
+              color: Colors.blue[900]?.withOpacity(0.5),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
                     const ListTile(
-                      leading: Icon(Icons.electric_car, color: Colors.blue),
+                      leading: Icon(Icons.electric_car, color: Colors.white),
                       title: Text('Connect Your Tesla Account'),
                       subtitle: Text(
                         'Enable smart charging by linking your account.',
@@ -82,97 +88,141 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
-          if (!isTeslaConnected) const Divider(height: 30, thickness: 1),
+          if (!isTeslaConnected) const SizedBox(height: 32),
 
-          Text(
-            'Charging Preferences',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const Divider(height: 20, thickness: 1),
-
-          // All the sliders remain the same...
-          ListTile(
-            title: const Text('Target Battery'),
-            subtitle: Text(
-              'Charge up to $_targetBattery% in the optimal window.',
+          Text('Charging', style: theme.textTheme.headlineSmall),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            decoration: BoxDecoration(
+              color: theme.cardTheme.color,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                _buildSliderRow(
+                  title: 'Charging Duration',
+                  valueText: '${userData.chargingDuration} hours',
+                  slider: CustomSlider(
+                    value: userData.chargingDuration.toDouble(),
+                    min: 1,
+                    max: 10,
+                    divisions: 9,
+                    label: '${userData.chargingDuration} hours',
+                    onChanged: (value) {
+                      /* We don't need instant UI update here */
+                    },
+                    onChangeEnd: (value) =>
+                        _updateUserSetting('chargingDuration', value.round()),
+                  ),
+                ),
+                _buildSliderRow(
+                  title: 'Target Battery %',
+                  valueText: '${userData.targetBattery}%',
+                  slider: CustomSlider(
+                    value: userData.targetBattery.toDouble(),
+                    min: 50,
+                    max: 100,
+                    divisions: 10,
+                    label: '${userData.targetBattery}%',
+                    onChanged: (value) {
+                      /* No need for instant update */
+                    },
+                    onChangeEnd: (value) =>
+                        _updateUserSetting('targetBattery', value.round()),
+                  ),
+                ),
+                _buildSliderRow(
+                  title: 'Emergency Threshold %',
+                  valueText: '${userData.emergencyThreshold}%',
+                  slider: CustomSlider(
+                    value: userData.emergencyThreshold.toDouble(),
+                    min: 10,
+                    max: 50,
+                    divisions: 8,
+                    label: '${userData.emergencyThreshold}%',
+                    onChanged: (value) {
+                      /* No need for instant update */
+                    },
+                    onChangeEnd: (value) =>
+                        _updateUserSetting('emergencyThreshold', value.round()),
+                  ),
+                ),
+              ],
             ),
           ),
-          Slider(
-            value: _targetBattery.toDouble(),
-            min: 50,
-            max: 100,
-            divisions: 10,
-            label: '$_targetBattery%',
-            onChanged: (double value) {
-              setState(() {
-                _targetBattery = value.round();
-              });
-            },
-            onChangeEnd: (double value) {
-              _updateUserSetting('targetBattery', value.round());
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            title: const Text('Emergency Threshold'),
-            subtitle: Text(
-              'Charge immediately if battery drops below $_emergencyThreshold%.',
+          const SizedBox(height: 32),
+          Text('Advanced', style: theme.textTheme.headlineSmall),
+          const SizedBox(height: 16),
+          Container(
+            decoration: BoxDecoration(
+              color: theme.cardTheme.color,
+              borderRadius: BorderRadius.circular(12),
             ),
-          ),
-          Slider(
-            value: _emergencyThreshold.toDouble(),
-            min: 10,
-            max: 50,
-            divisions: 8,
-            label: '$_emergencyThreshold%',
-            onChanged: (double value) {
-              setState(() {
-                _emergencyThreshold = value.round();
-              });
-            },
-            onChangeEnd: (double value) {
-              _updateUserSetting('emergencyThreshold', value.round());
-            },
-          ),
-          const SizedBox(height: 20),
-          ListTile(
-            title: const Text('Charging Duration'),
-            subtitle: Text('The number of hours needed to reach your target.'),
-          ),
-          Slider(
-            value: _chargingDuration.toDouble(),
-            min: 1,
-            max: 10,
-            divisions: 9,
-            label: '$_chargingDuration hours',
-            onChanged: (double value) {
-              setState(() {
-                _chargingDuration = value.round();
-              });
-            },
-            onChangeEnd: (double value) {
-              _updateUserSetting('chargingDuration', value.round());
-            },
-          ),
-          const SizedBox(height: 40),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.logout),
-            label: const Text('Log Out'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              textStyle: const TextStyle(fontSize: 18),
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+            child: SwitchListTile(
+              title: const Text(
+                'Solar Only Charging',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text(
+                'When enabled, will only charge using excess solar power.',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+              value: _solarChargingEnabled!,
+              onChanged: (value) {
+                setState(() => _solarChargingEnabled = value);
+                _updateUserSetting('solarChargingEnabled', value);
+              },
+              activeColor: theme.primaryColor,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
               ),
             ),
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
-            },
+          ),
+          const SizedBox(height: 40),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2C2C2E),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () => FirebaseAuth.instance.signOut(),
+            child: const Text(
+              'Log Out',
+              style: TextStyle(fontSize: 16, color: Colors.redAccent),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSliderRow({
+    required String title,
+    required String valueText,
+    required Widget slider,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title),
+              Text(valueText, style: const TextStyle(color: Colors.white70)),
+            ],
+          ),
+        ),
+        slider,
+      ],
     );
   }
 }
