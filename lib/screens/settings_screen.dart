@@ -30,7 +30,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final userData = Provider.of<UserData>(context);
-    print('DEBUG: Current VIN from provider is "${userData.vin}"');
 
     final theme = Theme.of(context);
     // Initialize the toggle's state if it hasn't been set yet.

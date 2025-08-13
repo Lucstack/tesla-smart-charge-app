@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tesla Smart Charge Authentication</title>
+    <script type="text/javascript">
+      function handleRedirect() {
+        // Get the URL parameters from the address bar
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const state = params.get('state');
+
+        if (code) {
+          // If we have a code, redirect back to the app using the custom scheme
+          window.location.replace(
+            `teslasmartchargeapp://auth/callback?code=${code}&state=${state}`
+          );
+        } else {
+          // If there's an error, show it
+          document.getElementById('message').innerText =
+            'An error occurred. Please return to the app and try again.';
+        }
+      }
+    </script>
+  </head>
+  <body onload="handleRedirect()">
+    <p id="message">Please wait, redirecting you back to the app...</p>
+  </body>
+</html>

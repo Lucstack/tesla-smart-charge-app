@@ -17,33 +17,33 @@ class _ConnectTeslaScreenState extends State<ConnectTeslaScreen> {
       _isLoading = true;
     });
 
-    // These values should match what's in your Tesla Developer account
-    const clientId = "9c4f75ae-5f3a-4e1a-957d-f0546f30a17e";
-    const callbackUrl = "teslasmartchargeapp://auth/callback";
+    const clientId = "9c4f75ae-5f3a-4e1a-957d-f0546f30a17e"; // Your Client ID
+
+    const redirectUrlFromServer =
+        "https://teslasmartchargeapp.web.app/callback";
+
+    const callbackUrlScheme = "teslasmartchargeapp";
     const scopes =
         "openid offline_access vehicle_device_data vehicle_cmds vehicle_charging_cmds";
 
-    // 1. Construct the authorization URL
     final authUrl = Uri.https('auth.tesla.com', '/oauth2/v3/authorize', {
       'client_id': clientId,
-      'redirect_uri': callbackUrl,
+      'redirect_uri':
+          redirectUrlFromServer, // Now it clearly matches the parameter name
       'response_type': 'code',
       'scope': scopes,
-      'state': '12345', // A random string for security
+      'state': '12345',
     });
 
     try {
-      // 2. Open the web view for the user to log in
       final result = await FlutterWebAuth2.authenticate(
         url: authUrl.toString(),
-        callbackUrlScheme: "teslasmartchargeapp",
+        callbackUrlScheme: callbackUrlScheme, // The app listens for this scheme
       );
 
-      // 3. Extract the authorization code from the result URL
       final code = Uri.parse(result).queryParameters['code'];
 
       if (code != null) {
-        // 4. Call our backend Cloud Function with the code
         final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
         final callable = functions.httpsCallable('exchangeAuthCodeForToken');
         await callable.call({'code': code});
@@ -55,24 +55,30 @@ class _ConnectTeslaScreenState extends State<ConnectTeslaScreen> {
             backgroundColor: Colors.green,
           ),
         );
+        // Pop back to the settings screen after success
+        Navigator.of(context).pop();
       }
     } catch (e) {
+      // Catch errors, including if the user presses "Cancel"
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Connection failed. Please try again.'),
+          content: Text('Connection failed or was cancelled.'),
           backgroundColor: Colors.red,
         ),
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // The build method remains the same as before...
     return Scaffold(
       appBar: AppBar(
         title: const Text('Connect Your Account'),
