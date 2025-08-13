@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "421862988515",
+    "project_id": "teslasmartchargeapp",
+    "storage_bucket": "teslasmartchargeapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:421862988515:android:29742320b9268720d503d6",
+        "android_client_info": {
+          "package_name": "com.example.tesla_smart_charge"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "421862988515-ci3a3otdvmsm4rjb9dcq5pr4q41k4g7v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCX8XCqW4_zCVzhf3_RJqbS2GU8CUhLQNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "421862988515-ci3a3otdvmsm4rjb9dcq5pr4q41k4g7v.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "421862988515-kitlogrbvkoppesjb5csfhu4p6ca9j17.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.teslaSmartCharge"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:421862988515:android:3cfbb58d4cd9963ad503d6",
+        "android_client_info": {
+          "package_name": "com.example.tesla_smart_charge_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "421862988515-ci3a3otdvmsm4rjb9dcq5pr4q41k4g7v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCX8XCqW4_zCVzhf3_RJqbS2GU8CUhLQNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "421862988515-ci3a3otdvmsm4rjb9dcq5pr4q41k4g7v.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "421862988515-kitlogrbvkoppesjb5csfhu4p6ca9j17.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.teslaSmartCharge"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
