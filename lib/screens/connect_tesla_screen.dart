@@ -4,7 +4,6 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 class ConnectTeslaScreen extends StatefulWidget {
   const ConnectTeslaScreen({super.key});
-
   @override
   State<ConnectTeslaScreen> createState() => _ConnectTeslaScreenState();
 }
@@ -17,28 +16,30 @@ class _ConnectTeslaScreenState extends State<ConnectTeslaScreen> {
       _isLoading = true;
     });
 
-    const clientId = "9c4f75ae-5f3a-4e1a-957d-f0546f30a17e"; // Your Client ID
+    // Make sure this is your NEW Client ID if you recreated the app
+    const clientId = "9c4f75ae-5f3a-4e1a-957d-f0546f30a17e";
 
-    const redirectUrlFromServer =
-        "https://teslasmartchargeapp.web.app/callback";
-
+    const redirectUri = "https://teslasmartchargeapp.web.app/callback";
     const callbackUrlScheme = "teslasmartchargeapp";
     const scopes =
         "openid offline_access vehicle_device_data vehicle_cmds vehicle_charging_cmds";
 
     final authUrl = Uri.https('auth.tesla.com', '/oauth2/v3/authorize', {
       'client_id': clientId,
-      'redirect_uri':
-          redirectUrlFromServer, // Now it clearly matches the parameter name
+      'redirect_uri': redirectUri,
       'response_type': 'code',
       'scope': scopes,
       'state': '12345',
+      // --- THIS IS THE MISSING PIECE ---
+      'audience': 'https://fleet-api.prd.na.vn.cloud.tesla.com',
     });
+
+    print('Final Authorization URL: ${authUrl.toString()}');
 
     try {
       final result = await FlutterWebAuth2.authenticate(
         url: authUrl.toString(),
-        callbackUrlScheme: callbackUrlScheme, // The app listens for this scheme
+        callbackUrlScheme: callbackUrlScheme,
       );
 
       final code = Uri.parse(result).queryParameters['code'];
@@ -55,11 +56,9 @@ class _ConnectTeslaScreenState extends State<ConnectTeslaScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        // Pop back to the settings screen after success
         Navigator.of(context).pop();
       }
     } catch (e) {
-      // Catch errors, including if the user presses "Cancel"
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -78,7 +77,6 @@ class _ConnectTeslaScreenState extends State<ConnectTeslaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // The build method remains the same as before...
     return Scaffold(
       appBar: AppBar(
         title: const Text('Connect Your Account'),
