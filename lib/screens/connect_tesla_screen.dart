@@ -17,7 +17,7 @@ class _ConnectTeslaScreenState extends State<ConnectTeslaScreen> {
     });
 
     // Make sure this is your NEW Client ID if you recreated the app
-    const clientId = "9c4f75ae-5f3a-4e1a-957d-f0546f30a17e";
+    const clientId = "761781a6-c268-4c39-8898-6ba264b1ff09";
 
     const redirectUri = "https://teslasmartchargeapp.web.app/callback";
     const callbackUrlScheme = "teslasmartchargeapp";

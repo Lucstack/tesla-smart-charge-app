@@ -14,29 +14,57 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // We only need local state for the toggle, as it has a visual on/off state.
-  // The sliders will now get their values directly from the provider.
-  bool? _solarChargingEnabled;
+  late int _targetBattery;
+  late int _emergencyThreshold;
+  late int _chargingDuration;
+  late bool _solarChargingEnabled;
+  bool _isInitialized = false;
 
+  // --- NEW: Updated function with error handling ---
   Future<void> _updateUserSetting(String field, dynamic value) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    if (user == null) return;
+
+    // Show immediate feedback to the user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Saving...'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+
+    try {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
         {'settings.$field': value},
       );
+    } catch (e) {
+      // If an error occurs, show an error message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Could not save setting. Please check your connection.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+  // --- END of new function ---
 
   @override
   Widget build(BuildContext context) {
     final userData = Provider.of<UserData>(context);
-
     final theme = Theme.of(context);
-    // Initialize the toggle's state if it hasn't been set yet.
-    _solarChargingEnabled ??= userData.solarChargingEnabled;
 
-    // --- THIS IS THE CRUCIAL CHECK ---
-    // We read directly from the provider every time the widget builds.
+    if (!_isInitialized) {
+      _targetBattery = userData.targetBattery;
+      _emergencyThreshold = userData.emergencyThreshold;
+      _chargingDuration = userData.chargingDuration;
+      _solarChargingEnabled = userData.solarChargingEnabled;
+      _isInitialized = true;
+    }
+
     final bool isTeslaConnected =
         userData.vin != 'UNKNOWN' && userData.vin.isNotEmpty;
 
@@ -57,7 +85,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(24.0),
         children: <Widget>[
-          // Show the "Connect" card if the user is not connected.
           if (!isTeslaConnected)
             Card(
               color: Colors.blue[900]?.withOpacity(0.5),
@@ -104,48 +131,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 _buildSliderRow(
                   title: 'Charging Duration',
-                  valueText: '${userData.chargingDuration} hours',
+                  valueText: '$_chargingDuration hours',
                   slider: CustomSlider(
-                    value: userData.chargingDuration.toDouble(),
+                    value: _chargingDuration.toDouble(),
                     min: 1,
                     max: 10,
                     divisions: 9,
-                    label: '${userData.chargingDuration} hours',
-                    onChanged: (value) {
-                      /* We don't need instant UI update here */
-                    },
+                    label: '$_chargingDuration hours',
+                    onChanged: (value) =>
+                        setState(() => _chargingDuration = value.round()),
                     onChangeEnd: (value) =>
                         _updateUserSetting('chargingDuration', value.round()),
                   ),
                 ),
                 _buildSliderRow(
                   title: 'Target Battery %',
-                  valueText: '${userData.targetBattery}%',
+                  valueText: '$_targetBattery%',
                   slider: CustomSlider(
-                    value: userData.targetBattery.toDouble(),
+                    value: _targetBattery.toDouble(),
                     min: 50,
                     max: 100,
                     divisions: 10,
-                    label: '${userData.targetBattery}%',
-                    onChanged: (value) {
-                      /* No need for instant update */
-                    },
+                    label: '$_targetBattery%',
+                    onChanged: (value) =>
+                        setState(() => _targetBattery = value.round()),
                     onChangeEnd: (value) =>
                         _updateUserSetting('targetBattery', value.round()),
                   ),
                 ),
                 _buildSliderRow(
                   title: 'Emergency Threshold %',
-                  valueText: '${userData.emergencyThreshold}%',
+                  valueText: '$_emergencyThreshold%',
                   slider: CustomSlider(
-                    value: userData.emergencyThreshold.toDouble(),
+                    value: _emergencyThreshold.toDouble(),
                     min: 10,
                     max: 50,
                     divisions: 8,
-                    label: '${userData.emergencyThreshold}%',
-                    onChanged: (value) {
-                      /* No need for instant update */
-                    },
+                    label: '$_emergencyThreshold%',
+                    onChanged: (value) =>
+                        setState(() => _emergencyThreshold = value.round()),
                     onChangeEnd: (value) =>
                         _updateUserSetting('emergencyThreshold', value.round()),
                   ),
@@ -170,7 +194,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'When enabled, will only charge using excess solar power.',
                 style: TextStyle(color: Colors.white70, fontSize: 12),
               ),
-              value: _solarChargingEnabled!,
+              value: _solarChargingEnabled,
               onChanged: (value) {
                 setState(() => _solarChargingEnabled = value);
                 _updateUserSetting('solarChargingEnabled', value);
